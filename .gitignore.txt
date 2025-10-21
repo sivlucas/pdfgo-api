@@ -49,7 +49,7 @@ Thumbs.db
 *.log
 logs/
 
-# Storage (não versionar arquivos de usuário)
+# Storage (NÃO versionar arquivos de usuário)
 storage/uploads/*
 storage/outputs/*
 storage/temp/*
