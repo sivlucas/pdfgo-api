@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  pdfgo-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=False
+      - OCR_ENABLED=True
+      - MAX_FILE_SIZE=104857600
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGINS=*
+    volumes:
+      - ./storage/uploads:/app/storage/uploads
+      - ./storage/outputs:/app/storage/outputs
+      - ./storage/temp:/app/storage/temp
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  # Worker para processamento assíncrono (opcional)
+  worker:
+    build: .
+    command: celery -A app.tasks worker --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./storage/uploads:/app/storage/uploads
+      - ./storage/outputs:/app/storage/outputs
+      - ./storage/temp:/app/storage/temp
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
